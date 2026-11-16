@@ -1,0 +1,50 @@
+{
+  "DQN, 3 hidden layers": {
+    "solved_at": 704,
+    "episodes_run": 704,
+    "training_steps": 161907,
+    "test_mean": 498.28,
+    "test_min": 466.0,
+    "final_loss_avg": 2.1795597235599997
+  },
+  "DQN, 5 hidden layers": {
+    "solved_at": 916,
+    "episodes_run": 916,
+    "training_steps": 218640,
+    "test_mean": 500.0,
+    "test_min": 500.0,
+    "final_loss_avg": 2.3994911915929986
+  },
+  "Double DQN, 3 hidden layers": {
+    "solved_at": 942,
+    "episodes_run": 942,
+    "training_steps": 177120,
+    "test_mean": 500.0,
+    "test_min": 500.0,
+    "final_loss_avg": 10.604550178514794
+  },
+  "Double DQN, 5 hidden layers": {
+    "solved_at": null,
+    "episodes_run": 1000,
+    "training_steps": 232745,
+    "test_mean": 140.93,
+    "test_min": 13.0,
+    "final_loss_avg": 39.45794552265107
+  },
+  "Dueling DQN, 3 hidden layers": {
+    "solved_at": 617,
+    "episodes_run": 617,
+    "training_steps": 126208,
+    "test_mean": 500.0,
+    "test_min": 500.0,
+    "final_loss_avg": 0.011902475637150928
+  },
+  "Dueling DQN, 5 hidden layers": {
+    "solved_at": 897,
+    "episodes_run": 897,
+    "training_steps": 166701,
+    "test_mean": 500.0,
+    "test_min": 500.0,
+    "final_loss_avg": 2.6931538115805016
+  }
+}
