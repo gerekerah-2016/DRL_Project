@@ -1,6 +1,6 @@
 # Deep Reinforcement Learning – Assignment 1: From Q-learning to DQN
 
-Ben-Gurion University of the Negev, Department of Software and Information Systems Engineering.
+Ben-Gurion University of the Negev, Stein Faculty of Computer and Information Science.
 
 | Section | Script | Environment | Method |
 |---|---|---|---|
