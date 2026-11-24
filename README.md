@@ -29,6 +29,7 @@ Each section includes Python scripts, experimental results, and visualizations. 
 ├── make_comparison.py        Summary tables and comparison figure
 ├── requirements.txt          Python dependencies
 └── results/                  Plots, data (CSV/JSON) and configurations
+                              (created by the scripts; included in the GitHub repository)
 ```
 
 ## Installation

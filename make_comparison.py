@@ -41,6 +41,9 @@ def load_runs():
 
 def main():
     runs = load_runs()
+    if not runs:
+        print("No CartPole results found in results/. Run section2_dqn.py / section3_*.py first.")
+        return
     for algo in ("DQN", "Dueling DQN", "Double DQN"):
         for L in (3, 5):
             if not any(r["algorithm"] == algo and r["layers"] == L and r["variant"] == "final" for r in runs):
