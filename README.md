@@ -1,80 +1,83 @@
-# Deep Reinforcement Learning – Assignment 1: From Q-learning to DQN
+# Deep Reinforcement Learning – Assignment 1: From Q-learning to Deep Q-learning (DQN)
 
-Ben-Gurion University of the Negev, Department of Software and Information Systems Engineering.
+**Ben-Gurion University of the Negev**
+**Faculty of Computer and Information Science**
+**Course:** Deep Reinforcement Learning
 
-| Section | Script | Environment | Method |
-|---|---|---|---|
-| 1 | `section1_qlearning.py` | FrozenLake-v1 | Tabular Q-learning, decaying ε-greedy |
-| 2 | `section2_dqn.py` | CartPole-v1 | DQN with experience replay and a target network (3 or 5 hidden layers) |
-| 3 | `section3_dueling_dqn.py` | CartPole-v1 | **Dueling DQN – the Section 3 submission** |
-| 3 (extra) | `section3_double_dqn.py` | CartPole-v1 | Double DQN, an additional experiment |
+**Students:** Nechi Berhe Weldu (ID 850164070), Gebreslassie Teklu Reda (ID 850170440)
 
-The assignment names `FrozenLake-v0`, which no longer exists in Gymnasium. `FrozenLake-v1` is the same 4×4 slippery lake.
+## Project Overview
 
-## Setup
+This project implements and evaluates reinforcement learning algorithms using Python and Gymnasium environments. The assignment explores the transition from tabular Q-learning to Deep Q-learning (DQN), focusing on training performance, hyperparameter optimization, and algorithmic improvements.
 
-Python 3.10+:
+The project is divided into three sections:
+
+1. **Tabular Q-learning:** Implementation of Q-learning on the FrozenLake environment, including epsilon-greedy exploration, hyperparameter tuning, and performance visualization.
+2. **Deep Q-learning (DQN):** Implementation of DQN using PyTorch on the CartPole environment, including experience replay, target networks, and comparison of neural network architectures.
+3. **Improved DQN:** Implementation and evaluation of an enhanced DQN algorithm (Dueling DQN, with Double DQN as an additional experiment), comparing its performance with the basic DQN implementation.
+
+Each section includes Python scripts, experimental results, and visualizations. The accompanying Word report contains theoretical answers, experimental analysis, and comparisons.
+
+## Project Structure
+
+```
+├── report.docx               Report: theory answers, results, analysis
+├── section1_qlearning.py     Section 1 – Tabular Q-learning (FrozenLake)
+├── section2_dqn.py           Section 2 – DQN (CartPole), 3 or 5 hidden layers
+├── section3_dueling_dqn.py   Section 3 – Dueling DQN (main improvement)
+├── section3_double_dqn.py    Section 3 – Double DQN (additional experiment)
+├── make_comparison.py        Summary tables and comparison figure
+├── requirements.txt          Python dependencies
+└── results/                  Plots, data (CSV/JSON) and configurations
+```
+
+## Installation
+
+Requires Python 3.10 or newer.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Reproducing every result
-
-Run from this folder. Each DQN run takes roughly 5–15 minutes on one CPU core.
+## Running the Code
 
 ```bash
-# Section 1: grid search (validation seeds) -> results/section1/best_config.json, then final training
+# Section 1 – hyperparameter search, then training
 python section1_qlearning.py --search
 
-# Section 2: DQN
+# Section 2 – DQN with 3 and 5 hidden layers
 python section2_dqn.py --layers 3
 python section2_dqn.py --layers 5
-python section2_dqn.py --layers 3 --constant-lr      # learning-rate ablation in the report
 
-# Section 3: Dueling DQN (primary) and Double DQN (extra)
+# Section 3 – Dueling DQN and Double DQN
 python section3_dueling_dqn.py --layers 3
 python section3_dueling_dqn.py --layers 5
 python section3_double_dqn.py --layers 3
 python section3_double_dqn.py --layers 5
 
-# Extra seeds for the Section 3 comparison
-python section2_dqn.py --layers 3 --seed 1
-python section3_dueling_dqn.py --layers 3 --seed 1
-python section2_dqn.py --layers 3 --seed 2
-python section3_dueling_dqn.py --layers 3 --seed 2
-
-# Summary tables (results/summary.json, summary.csv) and comparison figure
+# Comparison figure and summary tables
 python make_comparison.py
-
 ```
 
-Test a saved agent (optionally watching it play):
+Useful options: `--seed N` sets the random seed (default 0), `--render` shows the trained agent playing, and `--load <model file>` tests a saved agent. `section2_dqn.py --constant-lr` runs the learning-rate experiment described in the report.
 
-```bash
-python section2_dqn.py --load results/section3_dueling/3L_seed0_model.pt --render
-```
-
-TensorBoard logs (reward, loss per training step, 100-episode average, ε, learning rate):
+Training curves can be viewed in TensorBoard:
 
 ```bash
 tensorboard --logdir runs
 ```
 
-## Definitions and seeds
-
-- **Environment step**: one `env.step` call. **Training step**: one gradient update (one per environment step once the replay holds 1,000 transitions). The target network is synced every **C = 500 environment steps**.
-- **Episodes to solve**: the last episode of the first window of 100 consecutive *training* episodes with average reward ≥ 475 (checked independently in code).
-- **Greedy test**: ε = 0 on 100 new episodes with seeds 123456–123555, never used in training.
-- Only a real failure (`terminated`) is treated as terminal; the time limit (`truncated`) still bootstraps.
-- Seeds: CartPole training episode *i* of seed *k* uses env seed *k*·10000 + *i*. FrozenLake uses *k*·100000 + *i*, validation seeds 50000+ and test seeds 10000+.
-
-## Output files
-
-Per CartPole run (`results/<section>/<L>L_seed<k>[_constlr]`): `_reward.png`, `_loss.png`, `_episodes.csv` (reward, 100-episode average, ε, learning rate), `_loss.csv`, `_data.json`, `_config.json` (all settings, parameter count, versions) and `_model.pt` (weights with architecture metadata).
-
-Section 1 (`results/section1`): Q-table colormaps, plots, `hp_search.csv/json`, `best_config.json`, `episodes.csv`, `metrics.json`.
+Note: the assignment specifies `FrozenLake-v0`, which is no longer available in Gymnasium; `FrozenLake-v1` is the same environment and is used instead.
 
 ## Results
 
-See `report.docx` and `results/summary.csv`.
+| Method | Episodes to reach an average reward of 475 (over 100 episodes) |
+|---|---|
+| Q-learning, FrozenLake | 72.8% success rate on 1000 test episodes |
+| DQN, 3 hidden layers | 704 (seed 0); 622 ± 90 over 3 seeds |
+| DQN, 5 hidden layers | 916 (seed 0) |
+| Dueling DQN, 3 hidden layers | 617 (seed 0); 631 ± 140 over 3 seeds |
+| Dueling DQN, 5 hidden layers | 897 (seed 0) |
+| Double DQN, 3 hidden layers | 942 (seed 0) |
+
+Full results, plots and discussion are in `report.docx`.
