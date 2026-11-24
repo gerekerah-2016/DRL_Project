@@ -5,7 +5,13 @@ const {
   LevelFormat, Footer, PageNumber,
 } = require("docx");
 
-const S = JSON.parse(fs.readFileSync("results/summary.json"));
+const SUM = JSON.parse(fs.readFileSync("results/summary.json"));
+const S = {};
+for (const x of SUM.runs) if (x.variant === "final" && x.seed === 0) S[`${x.algorithm}, ${x.layers} hidden layers`] = x;
+const AGG = {};
+for (const a of SUM.aggregate) AGG[`${a.algorithm}|${a.layers}`] = a;
+const CONSTLR = SUM.runs.find((x) => x.algorithm === "DQN" && x.layers === 3 && x.seed === 0 && x.variant === "constlr");
+const S1M = JSON.parse(fs.readFileSync("results/section1/metrics.json"));
 const F = "Calibri";
 const fmt = (v) => (v === null || v === undefined ? "not reached in 1000" : String(v));
 const r = (name) => S[name] || {};
@@ -71,35 +77,50 @@ function figure(path, caption, widthIn) {
 }
 
 // ---------- Section 1 HP search table ----------
-const searchRows = fs.readFileSync("s1_log.txt", "utf8").split("\n")
-  .filter((l) => l.startsWith("alpha="))
-  .map((l) => { const m = l.match(/alpha=(\S+)\s+gamma=(\S+)\s+decay=(\S+)\s+greedy success=(\S+)/); return [m[1], m[2], m[3], m[4]]; });
-const s1 = fs.readFileSync("s1_log.txt", "utf8");
-const s1Greedy = s1.match(/Greedy policy success rate over 1000 test episodes: (\S+)/)[1];
-const s1Last100 = s1.match(/Success rate in last 100 training episodes: (\S+)/)[1];
-const s1Steps = s1.match(/Avg steps to goal, last 100 episodes: (\S+)/)[1];
-
+const searchRows = fs.readFileSync("results/section1/hp_search.csv", "utf8").trim().split("\n").slice(1)
+  .map((l) => { const c = l.split(","); return [c[0], c[1], c[2], `${(+c[3]).toFixed(3)} \u00b1 ${(+c[4]).toFixed(3)}`]; });
+const s1Greedy = String(S1M.greedy_test_success);
+const s1Last100 = S1M.success_last100_training.toFixed(2);
+const s1Steps = S1M.avg_steps_last100.toFixed(1);
 const D3 = r("DQN, 3 hidden layers"), D5 = r("DQN, 5 hidden layers");
 const DD3 = r("Double DQN, 3 hidden layers"), DD5 = r("Double DQN, 5 hidden layers");
 const DU3 = r("Dueling DQN, 3 hidden layers"), DU5 = r("Dueling DQN, 5 hidden layers");
-const DUELING_5L_TEXT = process.env.DUELING_5L_TEXT || "";
+const DUELING_5L_TEXT = "With 5 hidden layers it solved the task after **897 episodes** versus 916 for DQN, again scoring 500.0 on every test episode, so the dueling architecture was faster with both network sizes for seed 0. The gain is smaller for the deeper network: its 100-episode average rose to about 365 by episode 500, collapsed to about 50 around episode 640, and then recovered very quickly (Figures C3 and C5), showing the same instability as plain DQN.";
+// Multi-seed text, generated from results/summary.json so it always matches the data
+const MULTISEED_TEXT = (() => {
+  const a = AGG["DQN|3"], b = AGG["Dueling DQN|3"];
+  const common = a.seeds.filter((sd) => b.seeds.includes(sd));
+  const pairs = common.map((sd) => [sd, a.solved_at[a.seeds.indexOf(sd)], b.solved_at[b.seeds.indexOf(sd)]]);
+  const both = pairs.filter((p) => p[1] !== null && p[2] !== null);
+  const wins = both.filter((p) => p[2] < p[1]).length;
+  const test = (al, sd) => SUM.runs.find((x) => x.algorithm === al && x.layers === 3 && x.seed === sd && x.variant === "final").test_mean.toFixed(1);
+  const spread = (g) => { const v = g.solved_at.filter((x) => x !== null); return Math.max(...v) - Math.min(...v); };
+  const gap = a.solved_mean - b.solved_mean, maxSpread = Math.max(spread(a), spread(b));
+  const verdict = gap > 0
+    ? (gap < maxSpread ? "the dueling architecture tends to help on average, but the gap is smaller than the variation between seeds of the same algorithm, so it is not a reliable or statistically significant improvement" : "the dueling architecture was consistently faster")
+    : "the seed-0 advantage did not hold on average: the means are practically equal and the difference is far smaller than the variation between seeds of the same algorithm, so on CartPole with these settings Dueling DQN did not give a reliable improvement over DQN";
+  return `Over the ${common.length} seeds run for both algorithms, Dueling DQN solved the task faster in ${wins} of ${both.length} (${both.map((p) => `${p[2]} vs ${p[1]}`).join(", ")} episodes), with a mean of ${b.solved_mean.toFixed(0)} \u00b1 ${b.solved_std.toFixed(0)} versus ${a.solved_mean.toFixed(0)} \u00b1 ${a.solved_std.toFixed(0)} episodes for DQN (seeds differ by up to ${maxSpread} episodes). ` +
+    `Therefore ${verdict}. A likely reason is that CartPole has only two actions, so separating V(s) from A(s,a) saves little; the architecture is expected to help more with many actions. ` +
+    `Greedy test scores also vary by seed (DQN: ${common.map((sd) => test("DQN", sd)).join(", ")}; Dueling DQN: ${common.map((sd) => test("Dueling DQN", sd)).join(", ")}), because training stops at the first solved window and the final policy is not always fully stable.`;
+})();
 
 // ---------- body ----------
 const body = [
   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Deep Reinforcement Learning", bold: true, font: F, size: 32 })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Assignment 1 \u2013 From Q-learning to Deep Q-learning (DQN)", bold: true, font: F, size: 28 })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 60 }, children: [new TextRun({ text: "Ben-Gurion University of the Negev \u2013 Department of Software and Information Systems Engineering", font: F, size: 22 })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Student 1: [Full name], ID [000000000]     Student 2: [Full name], ID [000000000]", font: F, size: 24, highlight: "yellow" })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Nechi Berhe Weldu, ID 850164070     Gebreslassie Teklu Reda, ID 850170440", font: F, size: 24 })] }),
   gap(),
 
   H1("How to run the code"),
   P("Python 3.10+ is required. Install the dependencies with **pip install -r requirements.txt** (gymnasium, torch, numpy, matplotlib, tensorboard). Run each script from the folder that contains it:"),
-  bullet("**python section1_qlearning.py** \u2013 Q-learning on FrozenLake (add **--search** to repeat the hyper-parameter search)."),
+  bullet("**python section1_qlearning.py --search** \u2013 hyper-parameter search (saved to best_config.json), then Q-learning on FrozenLake; without **--search** it trains with the saved best_config.json."),
   bullet("**python section2_dqn.py --layers 3** and **python section2_dqn.py --layers 5** \u2013 DQN on CartPole-v1 with the 3- and 5-hidden-layer networks."),
   bullet("**python section3_dueling_dqn.py --layers 3** (or **--layers 5**) \u2013 Dueling DQN on CartPole-v1, the Section 3 improvement."),
   bullet("**python section3_double_dqn.py --layers 3** (or **--layers 5**) \u2013 Double DQN, an extra Section 3 experiment."),
-  bullet("**python make_comparison.py** \u2013 comparison figure of all CartPole runs. Add **--render** to the DQN scripts to watch the trained agent."),
-  P("Plots are saved in **results/** and TensorBoard logs in **runs/** (view them with **tensorboard --logdir runs**). All runs use seed 0."),
+  bullet("**python make_comparison.py** \u2013 comparison figure and results/summary.json/csv (mean \u00b1 std over seeds)."),
+  bullet("Options for the CartPole scripts: **--seed N** (default 0), **--render** (watch the agent after training), **--load <file>_model.pt** (test a saved agent with test_agent, e.g. **python section2_dqn.py --load results/section2/3L_seed0_model.pt --render**), and for section2_dqn.py **--constant-lr** (the learning-rate ablation)."),
+  P("Plots, CSV/JSON data, configurations and models (with architecture metadata) are saved in **results/**, and TensorBoard logs in **runs/** (**tensorboard --logdir runs**). Unless stated otherwise, results are for seed 0; Section 3 also reports seeds 1\u20132."),
 
   H1("Section 1 \u2013 Tabular Q-learning"),
   ...Q("1.", "Why can\u2019t Value-Iteration be used when the dynamics are unknown?",
@@ -109,15 +130,15 @@ const body = [
   ...Q("3.", "What is the main difference between SARSA and Q-learning?",
     "SARSA is **on-policy**: its target R + \u03b3Q(S\u2032,A\u2032) uses the action A\u2032 that the agent actually takes next with its behaviour (e.g., \u03b5-greedy) policy. Q-learning is **off-policy**: its target R + \u03b3max_a Q(S\u2032,a) uses the greedy action, regardless of which action is taken next. Therefore SARSA learns the value of the exploring policy it follows, including the cost of exploration, and tends to learn safer behaviour (e.g., staying away from a cliff). Q-learning learns the optimal greedy values Q* directly, while it still explores."),
   ...Q("4.", "Why is decaying \u03b5-greedy better than acting greedily?",
-    "Acting greedily is pure exploitation: because the Q estimates start inaccurate (here all zeros), the agent locks onto the first actions that seem good and never tries the others, so it can converge to a sub-optimal policy. With \u03b5-greedy, every action keeps a non-zero probability of being tried, which guarantees continued exploration of all state-action pairs (a condition for Q-learning convergence). Decaying \u03b5 explores a lot at the start, when estimates are poor, and gradually exploits more as the estimates become reliable, approaching the greedy policy at the end."),
+    "Acting greedily is pure exploitation: because the Q estimates start inaccurate (here all zeros), the agent locks onto the first actions that seem good and never tries the others, so it can converge to a sub-optimal policy. With \u03b5-greedy, every action keeps a non-zero probability of being tried, so the agent keeps testing alternatives and can discover better ones. It encourages exploration but does not by itself guarantee that every state-action pair is visited; coverage also depends on the environment and the \u03b5 schedule. Decaying \u03b5 explores a lot at the start, when estimates are poor, and gradually exploits more as the estimates become reliable, approaching the greedy policy at the end."),
 
   H2("Implementation and hyper-parameters"),
-  P("The agent keeps a 16\u00d74 Q-table initialized with zeros and follows the algorithm of figure 3: the target is r for a terminal next state and r + \u03b3max_a Q(s\u2032,a) otherwise. Actions are chosen with decaying \u03b5-greedy (random tie-breaking among equal Q-values). It trains for 5000 episodes with at most 100 steps per episode. The assignment names FrozenLake-v0, which no longer exists in Gymnasium; FrozenLake-v1 is the same 4\u00d74 slippery lake and was used. Hyper-parameters were optimized with a grid search (3 seeds per setting, scored by the success rate of the final greedy policy on 500 test episodes):"),
-  table(["\u03b1 (learning rate)", "\u03b3 (discount)", "\u03b5 decay / episode", "Greedy success rate"], searchRows, [2250, 2250, 2250, 2250]),
+  P("The agent keeps a 16\u00d74 Q-table initialized with zeros and follows the algorithm of figure 3: the target is r for a terminal next state and r + \u03b3max_a Q(s\u2032,a) otherwise. Actions are chosen with decaying \u03b5-greedy (random tie-breaking among equal Q-values). It trains for 5000 episodes with at most 100 steps per episode. The assignment names FrozenLake-v0, which no longer exists in Gymnasium; FrozenLake-v1 is the same 4\u00d74 slippery lake and was used. Hyper-parameters were optimized with a grid search over 12 settings, each trained with 3 seeds and scored by the success rate of its greedy policy on 500 *validation* episodes. The validation episodes use different environment seeds from the 1000 test episodes reported below, so no test information is used for the choice. The setting with the highest mean is selected automatically and saved in best_config.json:"),
+  table(["\u03b1 (learning rate)", "\u03b3 (discount)", "\u03b5 decay / episode", "Validation success (mean \u00b1 std)"], searchRows, [2000, 2000, 2200, 2800]),
   gap(),
-  P(`**Final hyper-parameters:** \u03b1 = 0.1, \u03b3 = 0.99, \u03b5 starts at 1.0 and is multiplied by 0.999 after every episode down to 0.01. This setting is tied for the best score; the slow decay matters most, since fast decay (0.995) with a small \u03b1 stops exploring before the values propagate back from the goal. A high \u03b3 is also important, because the only reward is at the goal.`),
+  P(`**Final hyper-parameters:** \u03b1 = ${S1M.hp.alpha}, \u03b3 = ${S1M.hp.gamma}, \u03b5 starts at 1.0 and is multiplied by ${S1M.hp.eps_decay} after every episode down to 0.01 (validation success 0.760). The interaction of \u03b1 and the \u03b5 decay mattered most: with a small \u03b1 (0.05), fast decay (0.995) stops exploring before the values propagate back from the goal (0.18\u20130.20), while slow decay works (0.63\u20130.75). Since the only reward is at the goal, a high \u03b3 (0.99) helped in most settings. Differences between neighbouring settings are partly noise from only 3 seeds (e.g. the standard deviations in the table).`),
   H2("Results"),
-  P(`The final greedy policy reaches the goal in **${(parseFloat(s1Greedy) * 100).toFixed(1)}%** of 1000 test episodes, close to the ~74% that is optimal for the slippery 4\u00d74 lake (the ice moves the agent in an unintended direction 2/3 of the time). In the last 100 training episodes (still with \u03b5 = 0.01 exploration) the success rate was ${s1Last100} and the average number of steps was ${s1Steps}. The Q-table after 500 steps, after 2000 steps and the final table are shown in Figures A1\u2013A3; Figures A6\u2013A7 add the tables after 500 and 2000 *episodes* in case episodes were intended. After 500 and 2000 steps most values are still zero because the goal is rarely reached early on; in the final table values grow toward the goal (state 15), and holes (5, 7, 11, 12) and the goal itself stay zero because they are terminal. The reward per episode is in Figure A4 and the average steps to the goal over the last 100 episodes is in Figure A5: the success rate rises from ~0 to ~0.6 and the average number of steps drops from ~100 to ~60.`),
+  P(`The final greedy policy reaches the goal in **${(parseFloat(s1Greedy) * 100).toFixed(1)}%** of 1000 test episodes (training seed 0), close to the ~74% that is optimal for the slippery 4\u00d74 lake (the ice moves the agent in an unintended direction 2/3 of the time). In the last 100 training episodes (still with \u03b5 = 0.01 exploration) the success rate was ${s1Last100} and the average number of steps was ${s1Steps}. The Q-table after 500 steps, after 2000 steps and the final table are shown in Figures A1\u2013A3; Figures A6\u2013A7 add the tables after 500 and 2000 *episodes* in case episodes were intended. After 500 and 2000 steps most values are still zero because the goal is rarely reached early on; in the final table values grow toward the goal (state 15), and holes (5, 7, 11, 12) and the goal itself stay zero because they are terminal. The reward per episode is in Figure A4 and the average steps to the goal over the last 100 episodes is in Figure A5: the success rate rises from ~0 to ~0.6 and the average number of steps drops from ~100 to ~60.`),
 
   H1("Section 2 \u2013 Deep Q-learning"),
   ...Q("1.", "Why do we sample from the experience replay in random order?",
@@ -126,7 +147,7 @@ const body = [
     "Without it, the target r + \u03b3max_a Q(s\u2032,a;\u03b8) depends on the same weights that are being updated, so every gradient step also moves the target: the network chases a moving target, which creates feedback loops, oscillations and divergence. With a separate target network \u03b8\u207b that is copied from \u03b8 only every C steps, the targets stay fixed for C steps. Each period then becomes a stable regression problem, much like supervised learning, which makes training significantly more stable."),
 
   H2("Implementation"),
-  P("The script contains the required components: **QNetwork** (state in, Q-value of each action out; one class is used for both the Q-network and the target network, with different weights), **experience_replay** (a fixed-size deque of (s, a, r, s\u2032, done) transitions), **sample_batch** (a uniformly random minibatch), **sample_action** (decaying \u03b5-greedy), **train_agent** (the algorithm of figure 4 with MSE loss between the target and Q(s,a;\u03b8), and \u03b8\u207b \u2190 \u03b8 every C steps) and **test_agent** (greedy play on new episodes, optionally rendered). Only real failures are treated as terminal; reaching the 500-step limit is a truncation, so its target still bootstraps. Training stops as soon as the average reward of the last 100 episodes reaches 475."),
+  P("The script contains the required components: **QNetwork** (state in, Q-value of each action out; one class is used for both the Q-network and the target network, with different weights), **experience_replay** (a fixed-size deque of (s, a, r, s\u2032, done) transitions), **sample_batch** (a uniformly random minibatch), **sample_action** (decaying \u03b5-greedy), **train_agent** (the algorithm of figure 4 with MSE loss between the target and Q(s,a;\u03b8), and \u03b8\u207b \u2190 \u03b8 every C steps) and **test_agent** (greedy play on new episodes, optionally rendered). Transitions are stored as an **Experience** dataclass, and each gradient step is done by **optimize_batch**. The target is computed with the target network without gradients, so the optimizer updates the online network only. Only real failures are treated as terminal; reaching the 500-step limit is a truncation, so its target still bootstraps. C counts *environment steps*, and one gradient update is made per environment step once the replay holds 1,000 transitions. Training stops at the first window of 100 consecutive episodes whose average reward is at least 475; this episode count is checked independently against the saved rewards. Saved models include their architecture and hyper-parameters, so test_agent can reload them."),
   P("**Network structures** (ReLU after every hidden layer, linear output): the 3-hidden-layer network is 4 \u2192 128 \u2192 128 \u2192 128 \u2192 2 (33,922 parameters) and the 5-hidden-layer network is 4 \u2192 128 \u2192 128 \u2192 128 \u2192 128 \u2192 128 \u2192 2 (66,946 parameters)."),
   table(["Hyper-parameter", "Value", "Hyper-parameter", "Value"], [
     ["Optimizer", "Adam", "Batch size", "64"],
@@ -137,7 +158,7 @@ const body = [
     ["Loss", "MSE", "Gradient clipping", "max norm 10"],
   ], [2400, 2100, 2400, 2100]),
   gap(),
-  P("**Most influential hyper-parameter \u2013 the learning rate.** With a constant learning rate of 5e-4 the agent repeatedly reached the maximum of 500 but then collapsed (catastrophic forgetting: once the agent is good, the replay buffer fills with \u201cbalanced\u201d states only, and large updates destroy what it learned), so its 100-episode average peaked at ~428 and never reached 475 in 1000 episodes. Decaying the learning rate by 0.995 per episode let the agent learn quickly at the start and then settle on the good policy, which solved the task. The \u03b5 decay was the next most important: decaying too slowly wastes episodes on random actions."),
+  P(`**Most influential hyper-parameter \u2013 the learning-rate schedule.** In an ablation (3 hidden layers, seed 0, **--constant-lr**) with a constant learning rate of 5e-4 and everything else unchanged, the agent repeatedly reached the maximum of 500 and then collapsed (catastrophic forgetting: once the agent is good, the replay buffer fills with \u201cbalanced\u201d states only, and large updates destroy what it learned). Its 100-episode average peaked at ${CONSTLR.max_avg100.toFixed(1)} (episode ${CONSTLR.max_avg100_episode}) and did not reach 475 within 1000 episodes; its greedy test score was ${CONSTLR.test_mean.toFixed(1)} (Figure B5). With an initial learning rate of 1e-3 decayed by 0.995 per episode, the agent learned quickly at first and then settled on the good policy, solving the task. The ablation changes both the initial value and the decay, so it shows the effect of the schedule as a whole. The \u03b5 decay was the next most important: decaying too slowly wastes episodes on random actions.`),
   H2("Results"),
   table(["Network", "Episodes until avg \u2265 475 over 100 episodes", "Greedy test (100 new episodes): mean / min"], [
     ["3 hidden layers", fmt(D3.solved_at), `${D3.test_mean?.toFixed(1)} / ${D3.test_min}`],
@@ -151,7 +172,7 @@ const body = [
   P("Standard DQN outputs Q(s,a) for every action directly. **Dueling DQN** (Wang et al., 2016) splits the network, after a shared trunk, into two streams: a **value stream** V(s), which estimates how good the state is, and an **advantage stream** A(s,a), which estimates how much better each action is than the others. They are combined as Q(s,a) = V(s) + A(s,a) \u2212 mean_a\u2032 A(s,a\u2032); subtracting the mean makes V and A identifiable. The purpose is faster and more stable value learning: in many states the choice of action matters little (in CartPole, when the pole is nearly upright both pushes are almost equally good), and with a separate V(s) every update improves the value of the state for all actions at once, not only for the action that was taken. Only the network changes; the algorithm, the standard DQN target and all hyper-parameters are those of Section 2, so the comparison isolates the effect of the architecture."),
   H2("Hyper-parameters and network structure"),
   P("All hyper-parameters are identical to the Section 2 table (Adam, initial learning rate 1e-3 decayed \u00d70.995 per episode, \u03b3 = 0.99, batch 64, replay 50,000, C = 500 steps, \u03b5 1.0 \u2192 0.01 with \u00d70.98 per episode, MSE loss, gradient clipping 10). The networks use ReLU and keep the same number of hidden layers as in Section 2 on every path from input to output. **3 hidden layers:** shared trunk 4 \u2192 128 \u2192 128, then a value stream 128 \u2192 128 \u2192 1 and an advantage stream 128 \u2192 128 \u2192 2 (50,563 parameters). **5 hidden layers:** shared trunk of four 128-unit layers, then the same two streams (83,587 parameters)."),
-  H2("Results and comparison with Section 2"),
+  H2("Results and comparison with Section 2 (seed 0)"),
   table(["Algorithm", "Network", "Episodes until avg \u2265 475", "Greedy test mean / min"], [
     ["DQN (Section 2)", "3 hidden layers", fmt(D3.solved_at), `${D3.test_mean?.toFixed(1)} / ${D3.test_min}`],
     ["Dueling DQN", "3 hidden layers", fmt(DU3.solved_at), `${DU3.test_mean?.toFixed(1)} / ${DU3.test_min}`],
@@ -161,8 +182,15 @@ const body = [
     ["Double DQN (extra)", "5 hidden layers", fmt(DD5.solved_at), `${DD5.test_mean?.toFixed(1)} / ${DD5.test_min}`],
   ], [2300, 2000, 2500, 2200]),
   gap(),
-  P(`With 3 hidden layers, Dueling DQN reached an average reward of at least 475 over 100 consecutive episodes after **${fmt(DU3.solved_at)} episodes**, compared with ${fmt(D3.solved_at)} for DQN (${D3.solved_at - DU3.solved_at} fewer episodes, ${Math.round(100 * (D3.solved_at - DU3.solved_at) / D3.solved_at)}% faster), and its greedy policy scored ${DU3.test_mean?.toFixed(1)} on every one of 100 new test episodes (DQN: ${D3.test_mean?.toFixed(1)}, minimum ${D3.test_min}). ${DUELING_5L_TEXT} The reward and loss per training step are in Figures C1\u2013C4, and Figure C5 compares the 100-episode average reward of all runs. As in Section 2, the loss grows during training because the target Q-values grow as the agent survives longer.`),
-  P(`We also tried **Double DQN** (van Hasselt et al., 2016), which uses the online network to select the next action and the target network to evaluate it, y = r + \u03b3Q(s\u2032, argmax_a Q(s\u2032,a;\u03b8); \u03b8\u207b), to reduce the over-estimation caused by the max operator (Figures C6\u2013C9). It solved the task after ${fmt(DD3.solved_at)} episodes with 3 layers (test ${DD3.test_mean?.toFixed(1)}) and did not reach 475 within 1000 episodes with 5 layers, so it did not help here: over-estimation is mild in CartPole (two actions, +1 reward at every step) and its more conservative targets make the values grow more slowly. Each configuration was trained with one seed, so differences of a few dozen episodes are partly run-to-run variance; a firmer conclusion would need several seeds.`),
+  P(`For seed 0 with 3 hidden layers, Dueling DQN reached an average reward of at least 475 over 100 consecutive episodes after **${fmt(DU3.solved_at)} episodes**, compared with ${fmt(D3.solved_at)} for DQN (${D3.solved_at - DU3.solved_at} fewer episodes, ${Math.round(100 * (D3.solved_at - DU3.solved_at) / D3.solved_at)}% faster), and its greedy policy scored ${DU3.test_mean?.toFixed(1)} on every one of 100 new test episodes (DQN: ${D3.test_mean?.toFixed(1)}, minimum ${D3.test_min}). ${DUELING_5L_TEXT} The reward and loss per training step are in Figures C1\u2013C4, and Figure C5 compares the 100-episode average reward of all runs. As in Section 2, the loss grows during training because the target Q-values grow as the agent survives longer.`),
+  P(`**Robustness over seeds (3 hidden layers).** Because one seed is not enough to compare algorithms, the primary comparison was repeated with seed${AGG["DQN|3"].seeds.length > 2 ? "s" : ""} ${AGG["DQN|3"].seeds.filter((x) => x > 0).join(" and ")} (identical settings).`),
+  table(["Algorithm (3 hidden layers)", "Seed 0", "Seed 1", "Seed 2", "Mean \u00b1 std (solved runs)"],
+    ["DQN", "Dueling DQN"].map((al) => { const a = AGG[`${al}|3`]; const v = (sd) => { const i = a.seeds.indexOf(sd); return i < 0 ? "not run" : fmt(a.solved_at[i]); };
+      return [al, v(0), v(1), v(2), a.solved_mean === null ? "\u2013" : `${a.solved_mean.toFixed(0)}${a.solved_std === null ? "" : " \u00b1 " + a.solved_std.toFixed(0)} (${a.n_solved}/${a.n_seeds})`]; }),
+    [2600, 1300, 1300, 1300, 2500]),
+  gap(),
+  P(MULTISEED_TEXT),
+  P(`We also tried **Double DQN** (van Hasselt et al., 2016), which uses the online network to select the next action and the target network to evaluate it, y = r + \u03b3Q(s\u2032, argmax_a Q(s\u2032,a;\u03b8); \u03b8\u207b), to reduce the over-estimation caused by the max operator (Figures C6\u2013C9). It solved the task after ${fmt(DD3.solved_at)} episodes with 3 layers (test ${DD3.test_mean?.toFixed(1)}) and did not reach 475 within 1000 episodes with 5 layers, so it did not help here: over-estimation is mild in CartPole (two actions, +1 reward at every step) and its more conservative targets make the values grow more slowly. Double DQN and the 5-layer networks were trained with seed 0 only, so those comparisons are indicative rather than conclusive.`),
 ];
 
 // ---------- appendix ----------
@@ -182,6 +210,7 @@ const appendix = [
   ...figure("results/section2/3L_seed0_loss.png", "Figure B2 \u2013 DQN, 3 hidden layers: loss at every training step", 6.2),
   ...figure("results/section2/5L_seed0_reward.png", "Figure B3 \u2013 DQN, 5 hidden layers: total reward per training episode", 6.2),
   ...figure("results/section2/5L_seed0_loss.png", "Figure B4 \u2013 DQN, 5 hidden layers: loss at every training step", 6.2),
+  ...figure("results/section2/3L_seed0_constlr_reward.png", "Figure B5 \u2013 Ablation: DQN, 3 hidden layers, constant learning rate 5e-4: total reward per training episode", 6.2),
   H2("C. Section 3 \u2013 Dueling DQN (and Double DQN, extra)"),
   ...figure("results/section3_dueling/3L_seed0_reward.png", "Figure C1 \u2013 Dueling DQN, 3 hidden layers: total reward per training episode", 6.2),
   ...figure("results/section3_dueling/3L_seed0_loss.png", "Figure C2 \u2013 Dueling DQN, 3 hidden layers: loss at every training step", 6.2),

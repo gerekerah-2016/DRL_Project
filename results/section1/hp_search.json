@@ -1,0 +1,173 @@
+{
+  "grid": {
+    "alpha": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "gamma": [
+      0.95,
+      0.99
+    ],
+    "eps_decay": [
+      0.995,
+      0.999
+    ]
+  },
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "validation_seeds": [
+    50000,
+    50499
+  ],
+  "criterion": "mean greedy success rate on 500 validation episodes",
+  "results": [
+    {
+      "alpha": 0.05,
+      "gamma": 0.95,
+      "eps_decay": 0.995,
+      "val_success_mean": 0.19933333333333336,
+      "val_success_std": 0.0926258903091115,
+      "val_success_per_seed": [
+        0.142,
+        0.126,
+        0.33
+      ]
+    },
+    {
+      "alpha": 0.05,
+      "gamma": 0.95,
+      "eps_decay": 0.999,
+      "val_success_mean": 0.628,
+      "val_success_std": 0.168388439824908,
+      "val_success_per_seed": [
+        0.74,
+        0.754,
+        0.39
+      ]
+    },
+    {
+      "alpha": 0.05,
+      "gamma": 0.99,
+      "eps_decay": 0.995,
+      "val_success_mean": 0.18333333333333335,
+      "val_success_std": 0.10736024507340798,
+      "val_success_per_seed": [
+        0.144,
+        0.076,
+        0.33
+      ]
+    },
+    {
+      "alpha": 0.05,
+      "gamma": 0.99,
+      "eps_decay": 0.999,
+      "val_success_mean": 0.7520000000000001,
+      "val_success_std": 0.0028284271247461922,
+      "val_success_per_seed": [
+        0.748,
+        0.754,
+        0.754
+      ]
+    },
+    {
+      "alpha": 0.1,
+      "gamma": 0.95,
+      "eps_decay": 0.995,
+      "val_success_mean": 0.7466666666666667,
+      "val_success_std": 0.00659966329107445,
+      "val_success_per_seed": [
+        0.754,
+        0.748,
+        0.738
+      ]
+    },
+    {
+      "alpha": 0.1,
+      "gamma": 0.95,
+      "eps_decay": 0.999,
+      "val_success_mean": 0.476,
+      "val_success_std": 0.029529646120466803,
+      "val_success_per_seed": [
+        0.438,
+        0.48,
+        0.51
+      ]
+    },
+    {
+      "alpha": 0.1,
+      "gamma": 0.99,
+      "eps_decay": 0.995,
+      "val_success_mean": 0.7486666666666667,
+      "val_success_std": 0.007542472332656513,
+      "val_success_per_seed": [
+        0.754,
+        0.754,
+        0.738
+      ]
+    },
+    {
+      "alpha": 0.1,
+      "gamma": 0.99,
+      "eps_decay": 0.999,
+      "val_success_mean": 0.7600000000000001,
+      "val_success_std": 0.008640987597877155,
+      "val_success_per_seed": [
+        0.748,
+        0.764,
+        0.768
+      ]
+    },
+    {
+      "alpha": 0.2,
+      "gamma": 0.95,
+      "eps_decay": 0.995,
+      "val_success_mean": 0.446,
+      "val_success_std": 0.040628397293846895,
+      "val_success_per_seed": [
+        0.5,
+        0.402,
+        0.436
+      ]
+    },
+    {
+      "alpha": 0.2,
+      "gamma": 0.95,
+      "eps_decay": 0.999,
+      "val_success_mean": 0.7399999999999999,
+      "val_success_std": 0.015748015748023637,
+      "val_success_per_seed": [
+        0.718,
+        0.754,
+        0.748
+      ]
+    },
+    {
+      "alpha": 0.2,
+      "gamma": 0.99,
+      "eps_decay": 0.995,
+      "val_success_mean": 0.682,
+      "val_success_std": 0.10621989769655525,
+      "val_success_per_seed": [
+        0.75,
+        0.532,
+        0.764
+      ]
+    },
+    {
+      "alpha": 0.2,
+      "gamma": 0.99,
+      "eps_decay": 0.999,
+      "val_success_mean": 0.658,
+      "val_success_std": 0.1527437942001791,
+      "val_success_per_seed": [
+        0.768,
+        0.764,
+        0.442
+      ]
+    }
+  ]
+}

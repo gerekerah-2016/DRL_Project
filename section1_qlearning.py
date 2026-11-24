@@ -5,13 +5,19 @@ Note: the assignment names "FrozenLake-v0", which no longer exists in Gymnasium.
 "FrozenLake-v1" is the same 4x4 slippery lake and is used here.
 
 Usage:
-    python section1_qlearning.py            # train with the final hyper-parameters
-    python section1_qlearning.py --search   # run the hyper-parameter search first
-Outputs (in ./results/section1): Q-table colormaps, reward plot, steps plot,
-and TensorBoard logs in ./runs/section1.
+    python section1_qlearning.py --search   # hyper-parameter search -> best_config.json, then final training
+    python section1_qlearning.py            # final training with results/section1/best_config.json
+Outputs (in ./results/section1): Q-table colormaps, reward plot, steps plot, hp_search.csv/json,
+best_config.json, episodes.csv, metrics.json, and TensorBoard logs in ./runs/section1.
+
+Seeds: training episode i of run seed k uses env seed k*100000 + i; the search scores each setting on
+VALIDATION episodes (seeds 50000+); the final policy is reported on separate TEST episodes (seeds 10000+),
+so no test information is used to choose hyper-parameters.
 """
 import argparse
+import csv
 import itertools
+import json
 import os
 
 import gymnasium as gym
@@ -26,8 +32,12 @@ MAX_STEPS = 100
 OUT_DIR = os.path.join("results", "section1")
 ACTION_NAMES = ["Left", "Down", "Right", "Up"]
 
-# Final hyper-parameters (chosen with --search, see report)
-FINAL_HP = dict(alpha=0.1, gamma=0.99, eps_start=1.0, eps_min=0.01, eps_decay=0.999)
+VAL_SEED, TEST_SEED = 50_000, 10_000
+SEARCH_GRID = dict(alpha=[0.05, 0.1, 0.2], gamma=[0.95, 0.99], eps_decay=[0.995, 0.999])
+SEARCH_SEEDS = [0, 1, 2]
+BEST_CONFIG = os.path.join(OUT_DIR, "best_config.json")
+# Used only if best_config.json does not exist yet (run with --search to create it)
+DEFAULT_HP = dict(alpha=0.1, gamma=0.99, eps_start=1.0, eps_min=0.01, eps_decay=0.999)
 
 
 def sample_action(q_table, state, epsilon, rng):
@@ -50,13 +60,15 @@ def train(alpha, gamma, eps_start, eps_min, eps_decay, seed=0,
     epsilon, total_steps = eps_start, 0
 
     for ep in range(N_EPISODES):
-        state, _ = env.reset(seed=seed + ep)
+        state, _ = env.reset(seed=seed * 100_000 + ep)
         ep_reward, reached_goal, t = 0.0, False, 0
         for t in range(1, MAX_STEPS + 1):
             action = sample_action(q_table, state, epsilon, rng)
             next_state, reward, terminated, truncated, _ = env.step(action)
 
-            # Q-learning update (figure 3): target = r if s' terminal, else r + gamma * max_a Q(s', a)
+            # Q-learning update (figure 3): target = r if s' is terminal (hole/goal), else
+            # r + gamma * max_a Q(s', a). The 100-step limit is a truncation, not a terminal state,
+            # so a truncated transition still bootstraps.
             target = reward if terminated else reward + gamma * np.max(q_table[next_state])
             q_table[state, action] += alpha * (target - q_table[state, action])
 
@@ -84,7 +96,7 @@ def train(alpha, gamma, eps_start, eps_min, eps_decay, seed=0,
     return q_table, np.array(rewards), np.array(steps_to_goal), snaps_steps, snaps_eps
 
 
-def evaluate_greedy(q_table, n=1000, seed=10_000):
+def evaluate_greedy(q_table, n=1000, seed=TEST_SEED):
     """Success rate of the greedy policy (no exploration)."""
     env = gym.make("FrozenLake-v1", max_episode_steps=MAX_STEPS)
     wins = 0
@@ -100,18 +112,33 @@ def evaluate_greedy(q_table, n=1000, seed=10_000):
 
 
 def hp_search():
-    grid = dict(alpha=[0.05, 0.1, 0.2], gamma=[0.95, 0.99], eps_decay=[0.995, 0.999])
+    """Grid search. Each setting is trained with 3 seeds and scored by the greedy success rate on
+    500 VALIDATION episodes; the best mean is selected (ties broken by grid order) and saved."""
     results = []
-    for alpha, gamma, decay in itertools.product(*grid.values()):
+    for alpha, gamma, decay in itertools.product(*SEARCH_GRID.values()):
         scores = []
-        for seed in range(3):
+        for seed in SEARCH_SEEDS:
             q, *_ = train(alpha, gamma, 1.0, 0.01, decay, seed=seed)
-            scores.append(evaluate_greedy(q, n=500))
-        results.append((np.mean(scores), alpha, gamma, decay))
-        print(f"alpha={alpha:<5} gamma={gamma:<5} decay={decay:<6} greedy success={np.mean(scores):.3f}")
-    results.sort(reverse=True)
-    print("Best:", results[0])
-    return results
+            scores.append(evaluate_greedy(q, n=500, seed=VAL_SEED))
+        row = dict(alpha=alpha, gamma=gamma, eps_decay=decay, val_success_mean=float(np.mean(scores)),
+                   val_success_std=float(np.std(scores)), val_success_per_seed=scores)
+        results.append(row)
+        print(f"alpha={alpha:<5} gamma={gamma:<5} decay={decay:<6} val success={row['val_success_mean']:.3f}")
+    best = max(results, key=lambda r: r["val_success_mean"])     # first maximum = grid order tie-break
+    best_hp = dict(alpha=best["alpha"], gamma=best["gamma"], eps_start=1.0, eps_min=0.01,
+                   eps_decay=best["eps_decay"])
+    with open(os.path.join(OUT_DIR, "hp_search.json"), "w") as f:
+        json.dump(dict(grid=SEARCH_GRID, seeds=SEARCH_SEEDS, validation_seeds=[VAL_SEED, VAL_SEED + 499],
+                       criterion="mean greedy success rate on 500 validation episodes", results=results), f, indent=2)
+    with open(os.path.join(OUT_DIR, "hp_search.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["alpha", "gamma", "eps_decay", "val_success_mean", "val_success_std"])
+        for r in results:
+            w.writerow([r["alpha"], r["gamma"], r["eps_decay"], round(r["val_success_mean"], 4), round(r["val_success_std"], 4)])
+    with open(BEST_CONFIG, "w") as f:
+        json.dump(best_hp, f, indent=2)
+    print("Best:", best_hp, f"(validation success {best['val_success_mean']:.3f})")
+    return best_hp
 
 
 def plot_q_table(q_table, title, path):
@@ -141,10 +168,16 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     if args.search:
-        hp_search()
+        final_hp = hp_search()
+    elif os.path.exists(BEST_CONFIG):
+        final_hp = json.load(open(BEST_CONFIG))
+    else:
+        print(f"Warning: {BEST_CONFIG} not found - using default hyper-parameters (run with --search).")
+        final_hp = DEFAULT_HP
+    print("Final hyper-parameters:", final_hp)
 
     writer = SummaryWriter(os.path.join("runs", "section1"))
-    q, rewards, steps, snaps_steps, snaps_eps = train(**FINAL_HP, seed=args.seed, writer=writer)
+    q, rewards, steps, snaps_steps, snaps_eps = train(**final_hp, seed=args.seed, writer=writer)
     writer.close()
 
     for k, tbl in snaps_steps.items():
@@ -177,6 +210,16 @@ def main():
     print(f"Avg steps to goal, last 100 episodes: {avg_steps[-1]:.1f}")
     print(f"Greedy policy success rate over 1000 test episodes: {success:.3f}")
     np.save(os.path.join(OUT_DIR, "q_table_final.npy"), q)
+    with open(os.path.join(OUT_DIR, "episodes.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["episode", "reward", "steps_to_goal_or_100"])
+        w.writerows([(i + 1, float(r), int(t)) for i, (r, t) in enumerate(zip(rewards, steps))])
+    with open(os.path.join(OUT_DIR, "metrics.json"), "w") as f:
+        json.dump(dict(hp=final_hp, train_seed=args.seed, episodes=N_EPISODES, max_steps=MAX_STEPS,
+                       success_last100_training=float(rewards[-100:].mean()),
+                       avg_steps_last100=float(avg_steps[-1]),
+                       avg_steps_every100=[float(v) for v in avg_steps],
+                       greedy_test_success=float(success), test_seeds=[TEST_SEED, TEST_SEED + 999]), f, indent=2)
 
 
 if __name__ == "__main__":

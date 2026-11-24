@@ -1,50 +1,247 @@
 {
-  "DQN, 3 hidden layers": {
-    "solved_at": 704,
-    "episodes_run": 704,
-    "training_steps": 161907,
-    "test_mean": 498.28,
-    "test_min": 466.0,
-    "final_loss_avg": 2.1795597235599997
-  },
-  "DQN, 5 hidden layers": {
-    "solved_at": 916,
-    "episodes_run": 916,
-    "training_steps": 218640,
-    "test_mean": 500.0,
-    "test_min": 500.0,
-    "final_loss_avg": 2.3994911915929986
-  },
-  "Double DQN, 3 hidden layers": {
-    "solved_at": 942,
-    "episodes_run": 942,
-    "training_steps": 177120,
-    "test_mean": 500.0,
-    "test_min": 500.0,
-    "final_loss_avg": 10.604550178514794
-  },
-  "Double DQN, 5 hidden layers": {
-    "solved_at": null,
-    "episodes_run": 1000,
-    "training_steps": 232745,
-    "test_mean": 140.93,
-    "test_min": 13.0,
-    "final_loss_avg": 39.45794552265107
-  },
-  "Dueling DQN, 3 hidden layers": {
-    "solved_at": 617,
-    "episodes_run": 617,
-    "training_steps": 126208,
-    "test_mean": 500.0,
-    "test_min": 500.0,
-    "final_loss_avg": 0.011902475637150928
-  },
-  "Dueling DQN, 5 hidden layers": {
-    "solved_at": 897,
-    "episodes_run": 897,
-    "training_steps": 166701,
-    "test_mean": 500.0,
-    "test_min": 500.0,
-    "final_loss_avg": 2.6931538115805016
-  }
+  "runs": [
+    {
+      "algorithm": "DQN",
+      "layers": 3,
+      "seed": 0,
+      "variant": "constlr",
+      "solved_at": null,
+      "episodes_run": 1000,
+      "training_steps": 250878,
+      "max_avg100": 435.52,
+      "max_avg100_episode": 507,
+      "test_mean": 306.68,
+      "test_min": 225.0
+    },
+    {
+      "algorithm": "DQN",
+      "layers": 3,
+      "seed": 0,
+      "variant": "final",
+      "solved_at": 704,
+      "episodes_run": 704,
+      "training_steps": 161907,
+      "max_avg100": 476.16,
+      "max_avg100_episode": 704,
+      "test_mean": 498.28,
+      "test_min": 466.0
+    },
+    {
+      "algorithm": "DQN",
+      "layers": 3,
+      "seed": 1,
+      "variant": "final",
+      "solved_at": 525,
+      "episodes_run": 525,
+      "training_steps": 81480,
+      "max_avg100": 475.58,
+      "max_avg100_episode": 525,
+      "test_mean": 490.47,
+      "test_min": 22.0
+    },
+    {
+      "algorithm": "DQN",
+      "layers": 3,
+      "seed": 2,
+      "variant": "final",
+      "solved_at": 636,
+      "episodes_run": 636,
+      "training_steps": 113536,
+      "max_avg100": 475.62,
+      "max_avg100_episode": 636,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "DQN",
+      "layers": 5,
+      "seed": 0,
+      "variant": "final",
+      "solved_at": 916,
+      "episodes_run": 916,
+      "training_steps": 218640,
+      "max_avg100": 478.87,
+      "max_avg100_episode": 916,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "Dueling DQN",
+      "layers": 3,
+      "seed": 0,
+      "variant": "final",
+      "solved_at": 617,
+      "episodes_run": 617,
+      "training_steps": 126208,
+      "max_avg100": 475.63,
+      "max_avg100_episode": 617,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "Dueling DQN",
+      "layers": 3,
+      "seed": 1,
+      "variant": "final",
+      "solved_at": 498,
+      "episodes_run": 498,
+      "training_steps": 92913,
+      "max_avg100": 478.35,
+      "max_avg100_episode": 498,
+      "test_mean": 419.86,
+      "test_min": 15.0
+    },
+    {
+      "algorithm": "Dueling DQN",
+      "layers": 3,
+      "seed": 2,
+      "variant": "final",
+      "solved_at": 777,
+      "episodes_run": 777,
+      "training_steps": 148579,
+      "max_avg100": 475.4,
+      "max_avg100_episode": 777,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "Dueling DQN",
+      "layers": 5,
+      "seed": 0,
+      "variant": "final",
+      "solved_at": 897,
+      "episodes_run": 897,
+      "training_steps": 166701,
+      "max_avg100": 475.58,
+      "max_avg100_episode": 897,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "Double DQN",
+      "layers": 3,
+      "seed": 0,
+      "variant": "final",
+      "solved_at": 942,
+      "episodes_run": 942,
+      "training_steps": 177120,
+      "max_avg100": 476.64,
+      "max_avg100_episode": 942,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "Double DQN",
+      "layers": 5,
+      "seed": 0,
+      "variant": "final",
+      "solved_at": null,
+      "episodes_run": 1000,
+      "training_steps": 232745,
+      "max_avg100": 456.8,
+      "max_avg100_episode": 648,
+      "test_mean": 140.93,
+      "test_min": 13.0
+    }
+  ],
+  "aggregate": [
+    {
+      "algorithm": "DQN",
+      "layers": 3,
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "n_seeds": 3,
+      "n_solved": 3,
+      "solved_at": [
+        704,
+        525,
+        636
+      ],
+      "solved_mean": 621.6666666666666,
+      "solved_std": 90.35670054474839,
+      "test_mean": 496.25
+    },
+    {
+      "algorithm": "DQN",
+      "layers": 5,
+      "seeds": [
+        0
+      ],
+      "n_seeds": 1,
+      "n_solved": 1,
+      "solved_at": [
+        916
+      ],
+      "solved_mean": 916.0,
+      "solved_std": null,
+      "test_mean": 500.0
+    },
+    {
+      "algorithm": "Double DQN",
+      "layers": 3,
+      "seeds": [
+        0
+      ],
+      "n_seeds": 1,
+      "n_solved": 1,
+      "solved_at": [
+        942
+      ],
+      "solved_mean": 942.0,
+      "solved_std": null,
+      "test_mean": 500.0
+    },
+    {
+      "algorithm": "Double DQN",
+      "layers": 5,
+      "seeds": [
+        0
+      ],
+      "n_seeds": 1,
+      "n_solved": 0,
+      "solved_at": [
+        null
+      ],
+      "solved_mean": null,
+      "solved_std": null,
+      "test_mean": 140.93
+    },
+    {
+      "algorithm": "Dueling DQN",
+      "layers": 3,
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "n_seeds": 3,
+      "n_solved": 3,
+      "solved_at": [
+        617,
+        498,
+        777
+      ],
+      "solved_mean": 630.6666666666666,
+      "solved_std": 140.00119047112898,
+      "test_mean": 473.2866666666667
+    },
+    {
+      "algorithm": "Dueling DQN",
+      "layers": 5,
+      "seeds": [
+        0
+      ],
+      "n_seeds": 1,
+      "n_solved": 1,
+      "solved_at": [
+        897
+      ],
+      "solved_mean": 897.0,
+      "solved_std": null,
+      "test_mean": 500.0
+    }
+  ]
 }
