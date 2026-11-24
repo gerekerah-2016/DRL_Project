@@ -47,8 +47,6 @@ python section3_dueling_dqn.py --layers 3 --seed 2
 # Summary tables (results/summary.json, summary.csv) and comparison figure
 python make_comparison.py
 
-# Optional: rebuild report.docx from the saved results (needs Node.js and `npm install docx`)
-node build_report.js
 ```
 
 Test a saved agent (optionally watching it play):
