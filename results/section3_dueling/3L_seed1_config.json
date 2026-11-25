@@ -26,11 +26,11 @@
     123456,
     123555
   ],
-  "env_steps": 93912,
-  "training_steps": 92913,
-  "solved_at": 498,
-  "test_mean": 419.86,
-  "test_min": 15.0,
-  "torch": "2.15.0+cu132",
+  "env_steps": 118645,
+  "training_steps": 117646,
+  "solved_at": 598,
+  "test_mean": 500.0,
+  "test_min": 500.0,
+  "torch": "2.7.1+cu118",
   "gymnasium": "1.4.0"
 }
