@@ -1,8 +1,5 @@
 # Deep Reinforcement Learning – Assignment 1: From Q-learning to Deep Q-learning (DQN)
 
-**Ben-Gurion University of the Negev**
-**Faculty of Computer and Information Science**
-**Course:** Deep Reinforcement Learning
 
 **Students:** Nechi Berhe Weldu (ID 850164070), Gebreslassie Teklu Reda (ID 850170440)
 
