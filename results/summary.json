@@ -29,6 +29,32 @@
     {
       "algorithm": "DQN",
       "layers": 3,
+      "seed": 0,
+      "variant": "lr0.0005_decay0.995",
+      "solved_at": 780,
+      "episodes_run": 780,
+      "training_steps": 165066,
+      "max_avg100": 475.73,
+      "max_avg100_episode": 780,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "DQN",
+      "layers": 3,
+      "seed": 0,
+      "variant": "lr0.001_decay1",
+      "solved_at": null,
+      "episodes_run": 1000,
+      "training_steps": 226261,
+      "max_avg100": 439.97,
+      "max_avg100_episode": 810,
+      "test_mean": 500.0,
+      "test_min": 500.0
+    },
+    {
+      "algorithm": "DQN",
+      "layers": 3,
       "seed": 1,
       "variant": "final",
       "solved_at": 525,

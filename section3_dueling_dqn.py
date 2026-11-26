@@ -1,5 +1,5 @@
 """
-Section 3 (alternative improvement) - Dueling DQN (Wang et al., 2016) on CartPole-v1.
+Section 3 - Improved DQN (main improvement): Dueling DQN (Wang et al., 2016) on CartPole-v1.
 
 The Q-network is split into two streams after a shared trunk:
     V(s)   - how good the state is,

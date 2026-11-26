@@ -1,0 +1,36 @@
+{
+  "algorithm": "DQN",
+  "architecture": "QNetwork",
+  "n_hidden_layers": 3,
+  "n_parameters": 33922,
+  "seed": 1,
+  "target": "dqn_target",
+  "hp": {
+    "hidden_size": 128,
+    "lr": 0.001,
+    "lr_decay": 0.995,
+    "lr_min": 1e-05,
+    "gamma": 0.99,
+    "batch_size": 64,
+    "replay_size": 50000,
+    "min_replay": 1000,
+    "target_update": 500,
+    "eps_start": 1.0,
+    "eps_min": 0.01,
+    "eps_decay": 0.98,
+    "grad_clip": 10.0,
+    "max_episodes": 1000
+  },
+  "env": "CartPole-v1",
+  "test_seeds": [
+    123456,
+    123555
+  ],
+  "env_steps": 104572,
+  "training_steps": 103573,
+  "solved_at": 634,
+  "test_mean": 473.19,
+  "test_min": 291.0,
+  "torch": "2.7.1+cu118",
+  "gymnasium": "1.4.0"
+}

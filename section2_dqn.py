@@ -5,6 +5,7 @@ Usage:
     python section2_dqn.py --layers 3                    # 3 hidden layers, seed 0
     python section2_dqn.py --layers 5 --seed 1           # 5 hidden layers, seed 1
     python section2_dqn.py --layers 3 --constant-lr      # ablation: no learning-rate decay
+    python section2_dqn.py --layers 3 --lr 1e-3 --lr-decay 1.0   # learning-rate experiment (any lr / decay)
     python section2_dqn.py --load results/section2/3L_seed0_model.pt --render   # test a saved agent
 Outputs per run (prefix results/section2/<L>L_seed<seed>[tag]):
     _reward.png, _loss.png    reward per training episode / loss per training step
@@ -323,6 +324,10 @@ def main():
     parser.add_argument("--render", action="store_true", help="watch the agent after training")
     parser.add_argument("--constant-lr", action="store_true",
                         help="ablation: constant learning rate 5e-4 (no decay)")
+    parser.add_argument("--lr", type=float, default=None,
+                        help="learning-rate experiment: initial learning rate (default 1e-3)")
+    parser.add_argument("--lr-decay", type=float, default=None,
+                        help="learning-rate experiment: decay per episode (1.0 = constant; default 0.995)")
     parser.add_argument("--max-episodes", type=int, default=None)
     parser.add_argument("--load", help="test a saved _model.pt instead of training")
     args = parser.parse_args()
@@ -339,6 +344,12 @@ def main():
     if args.constant_lr:
         hp.update(lr=5e-4, lr_decay=1.0)
         tag = "_constlr"
+    if args.lr is not None or args.lr_decay is not None:
+        if args.lr is not None:
+            hp["lr"] = args.lr
+        if args.lr_decay is not None:
+            hp["lr_decay"] = args.lr_decay
+        tag += f"_lr{hp['lr']:g}_decay{hp['lr_decay']:g}"
     if args.max_episodes:
         hp["max_episodes"] = args.max_episodes
         tag += f"_max{args.max_episodes}"

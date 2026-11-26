@@ -1,6 +1,7 @@
 """
 Collects every CartPole run in results/, writes results/summary.json and results/summary.csv
-(per run and mean/std over seeds), and draws results/comparison_all.png (seed-0 runs).
+(per run and mean/std over seeds), and draws results/comparison_all.png (seed-0 runs) and
+results/section2/lr_schedules.png (learning-rate experiment, report Figure 22).
 Missing runs are reported as warnings, not errors.
 
 Usage: python make_comparison.py
@@ -37,6 +38,36 @@ def load_runs():
                              test_mean=float(np.mean(d["test_rewards"])),
                              test_min=float(np.min(d["test_rewards"])), rewards=d["rewards"]))
     return runs
+
+
+LR_RUNS = [("3L_seed0", "lr 1e-3, decay ×0.995 (final)", "C0-"),
+           ("3L_seed0_lr0.0005_decay0.995", "lr 5e-4, decay ×0.995", "C2-"),
+           ("3L_seed0_lr0.001_decay1", "lr 1e-3, constant", "C1--"),
+           ("3L_seed0_constlr", "lr 5e-4, constant", "C3--")]
+
+
+def plot_lr_schedules():
+    """Learning-rate experiment (report Figure 22): 100-episode average reward of four schedules,
+    DQN with 3 hidden layers, seed 0. Saved as results/section2/lr_schedules.png."""
+    paths = [f"results/section2/{f}_data.json" for f, _, _ in LR_RUNS]
+    missing = [p for p in paths if not os.path.exists(p)]
+    if missing:
+        print("Warning: learning-rate figure skipped, missing:", ", ".join(missing))
+        return
+    fig, ax = plt.subplots(figsize=(8, 4.6))
+    for path, (_, label, style) in zip(paths, LR_RUNS):
+        d = json.load(open(path))
+        r = d["rewards"]
+        avg = [np.mean(r[max(0, i - 99):i + 1]) for i in range(len(r))]
+        status = f"solved at episode {d['solved_at']}" if d["solved_at"] else f"not solved (max {max(avg):.1f})"
+        ax.plot(avg, style, lw=2, label=f"{label}: {status}")
+    ax.axhline(475, color="gray", ls=":", label="475")
+    ax.set_xlabel("Episode"); ax.set_ylabel("Average reward of last 100 episodes")
+    ax.set_title("DQN (3 hidden layers, seed 0) - learning-rate schedules")
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), ncol=2, fontsize=8, frameon=False)
+    fig.tight_layout()
+    fig.savefig("results/section2/lr_schedules.png", dpi=150)
+    plt.close(fig)
 
 
 def main():
@@ -84,6 +115,7 @@ def main():
     fig.savefig("results/comparison_all.png", dpi=150)
     plt.close(fig)
 
+    plot_lr_schedules()
     for a in aggregate:
         print(a)
     for r in per_run:

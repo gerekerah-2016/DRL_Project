@@ -26,7 +26,8 @@ Each section includes Python scripts, experimental results, and visualizations. 
 ├── make_comparison.py        Summary tables and comparison figure
 ├── requirements.txt          Python dependencies
 └── results/                  Plots, data (CSV/JSON) and configurations
-                              (created by the scripts; included in the GitHub repository)
+                              (created when the scripts are run; not included in this zip,
+                              available in the GitHub repository)
 ```
 
 ## Installation
@@ -57,7 +58,7 @@ python section3_double_dqn.py --layers 5
 python make_comparison.py
 ```
 
-Useful options: `--seed N` sets the random seed (default 0), `--render` shows the trained agent playing, and `--load <model file>` tests a saved agent. `section2_dqn.py --constant-lr` runs the learning-rate experiment described in the report.
+Useful options: `--seed N` sets the random seed (default 0), `--render` shows the trained agent playing, and `--load <model file>` tests a saved agent. `section2_dqn.py --constant-lr` (constant 5e-4) and `section2_dqn.py --lr <value> --lr-decay <value>` (e.g. `--lr 1e-3 --lr-decay 1.0`) run the learning-rate experiments described in the report.
 
 Training curves can be viewed in TensorBoard:
 

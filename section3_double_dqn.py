@@ -1,5 +1,5 @@
 """
-Section 3 - Improved DQN: Double DQN (van Hasselt, Guez & Silver, 2016) on CartPole-v1.
+Section 3 (additional experiment) - Double DQN (van Hasselt, Guez & Silver, 2016) on CartPole-v1.
 
 Everything (network, experience_replay, sample_batch, sample_action, train_agent, test_agent and
 hyper-parameters) is identical to Section 2; the only change is how the target is computed, so the
